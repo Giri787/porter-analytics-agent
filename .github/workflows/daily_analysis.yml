@@ -1,0 +1,59 @@
+name: Porter Daily Analytics
+
+on:
+  schedule:
+    # Run daily at 5:30 AM UTC (11:00 AM IST)
+    - cron: '30 5 * * *'
+  workflow_dispatch:  # Allows manual triggering from GitHub UI
+
+jobs:
+  run-analytics:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        # Install kaleido for static image export if needed, 
+        # though we switched to matplotlib which is safer
+        
+    - name: Run Porter Analytics Agent
+      env:
+        # Load secrets from GitHub Repository Secrets
+        EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
+        EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+        IMAP_SERVER: ${{ secrets.IMAP_SERVER || 'imap.gmail.com' }}
+        IMAP_PORT: ${{ secrets.IMAP_PORT || '993' }}
+        SMTP_SERVER: ${{ secrets.SMTP_SERVER || 'smtp.gmail.com' }}
+        SMTP_PORT: ${{ secrets.SMTP_PORT || '587' }}
+        EMAIL_SENDER_FILTER: ${{ secrets.EMAIL_SENDER_FILTER || 'datainfra@theporter.in' }}
+        REPORT_TO: ${{ secrets.REPORT_TO }}
+        # Default config values
+        EMAIL_SUBJECT_FILTER: 'Porter'
+        ONLY_UNREAD: 'true'
+        MARK_AS_READ: 'true'
+        MIN_ORDERS_THRESHOLD: '5'
+      run: |
+        # Create a temporary .env file from secrets/env vars for the script to use
+        # (Or rely on script reading env vars directly which python-dotenv does)
+        python main.py
+
+    - name: Archive artifacts (Optional)
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: execution-logs
+        path: |
+          porter_analytics.log
+          data/reports/*.html
+        retention-days: 5

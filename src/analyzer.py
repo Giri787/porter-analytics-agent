@@ -48,15 +48,27 @@ class PorterAnalyzer:
         """
         logger.info("Analyzing driver performance...")
         
+        hours_col = self._find_column(['online_hours', 'duty_hours', 'idle_hours', 'hours'])
+        
         results = {
             'total_drivers': len(self.df),
-            'active_drivers': 0,
+            'active_drivers': len(self.df),  # All recorded drivers in file are active drivers
+            'drivers_over_12_hours': 0,
+            'drivers_under_8_hours': 0,
+            'drivers_8_to_12_hours': 0,
             'top_performers': [],
             'bottom_performers': [],
             'high_cancellation_drivers': [],
             'high_idle_time_drivers': [],
             'summary_stats': {}
         }
+
+        # Duty/login hours categorization
+        if hours_col and hours_col in self.df.columns:
+            hours_series = pd.to_numeric(self.df[hours_col], errors='coerce').fillna(0)
+            results['drivers_under_8_hours'] = int((hours_series < 8).sum())
+            results['drivers_8_to_12_hours'] = int(((hours_series >= 8) & (hours_series <= 12)).sum())
+            results['drivers_over_12_hours'] = int((hours_series > 12).sum())
         
         # Identify metric columns (flexible to handle different column names)
         orders_col = self._find_column(['orders_completed', 'total_orders', 'orders'])
@@ -66,8 +78,6 @@ class PorterAnalyzer:
         
         # Calculate derived metrics
         if self.orders_col:
-            results['active_drivers'] = len(self.df[self.df['total_orders'] >= self.min_orders_threshold])
-            
             # Top performers by orders
             top_10 = self.df.nlargest(10, 'total_orders')
             results['top_performers'] = [
@@ -313,11 +323,13 @@ class PorterAnalyzer:
         if 'driver_performance' in self.analysis_results:
             perf = self.analysis_results['driver_performance']
             
-            if perf['total_drivers'] > 0:
-                active_pct = (perf['active_drivers'] / perf['total_drivers'] * 100)
+            if perf.get('drivers_over_12_hours', 0) > 0:
                 insights.append(
-                    f"📊 {perf['active_drivers']} out of {perf['total_drivers']} drivers "
-                    f"({active_pct:.1f}%) completed {self.min_orders_threshold}+ orders"
+                    f"⏰ {perf['drivers_over_12_hours']} drivers logged in for 12+ hours (High Duty)"
+                )
+            if perf.get('drivers_under_8_hours', 0) > 0:
+                insights.append(
+                    f"⏳ {perf['drivers_under_8_hours']} drivers logged in for < 8 hours (Part Time)"
                 )
             
             if perf['high_cancellation_drivers']:

@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class ReportGenerator:
     """Generates HTML reports with visualizations for Porter analytics."""
     
-    def __init__(self, analysis_results: Dict[str, Any], insights: List[str], integrity_results: Dict[str, Any] = None):
+    def __init__(self, analysis_results: Dict[str, Any], insights: List[str], integrity_results: Dict[str, Any] = None, monthly_results: Dict[str, Any] = None):
         """
         Initialize report generator.
         
@@ -28,10 +28,12 @@ class ReportGenerator:
             analysis_results: Dictionary containing all analysis results
             insights: List of insight strings
             integrity_results: Dictionary containing integrity and productivity analysis
+            monthly_results: Dictionary containing 1-2 month relational analysis
         """
         self.analysis_results = analysis_results
         self.insights = insights
         self.integrity_results = integrity_results or {}
+        self.monthly_results = monthly_results or {}
         self.charts = {}
         
     def generate_charts(self) -> Dict[str, str]:
@@ -401,6 +403,10 @@ class ReportGenerator:
         # Add integrity & productivity analysis section
         if self.integrity_results:
             html += self._generate_integrity_section()
+            
+        # Add monthly & relational analytics section
+        if self.monthly_results:
+            html += self._generate_monthly_relational_section()
         
         # Footer
         html += """
@@ -413,7 +419,7 @@ class ReportGenerator:
 """
         
         return html
-    
+
     def _generate_summary_section(self) -> str:
         """Generate summary metrics section."""
         html = '    <div class="section">\n'
@@ -424,12 +430,20 @@ class ReportGenerator:
             perf = self.analysis_results['driver_performance']
             html += f"""
             <div class="metric-card">
-                <h3>{perf['total_drivers']}</h3>
-                <p>Total Drivers</p>
+                <h3>{perf['active_drivers']}</h3>
+                <p>Total Active Drivers</p>
             </div>
             <div class="metric-card">
-                <h3>{perf['active_drivers']}</h3>
-                <p>Active Drivers</p>
+                <h3>{perf.get('drivers_over_12_hours', 0)}</h3>
+                <p>Logged in 12+ Hours</p>
+            </div>
+            <div class="metric-card">
+                <h3>{perf.get('drivers_under_8_hours', 0)}</h3>
+                <p>Logged in &lt; 8 Hours</p>
+            </div>
+            <div class="metric-card">
+                <h3>{perf.get('drivers_8_to_12_hours', 0)}</h3>
+                <p>Logged in 8-12 Hours</p>
             </div>
 """
         
@@ -438,7 +452,7 @@ class ReportGenerator:
             html += f"""
             <div class="metric-card">
                 <h3>{loc['total_regions']}</h3>
-                <p>Regions</p>
+                <p>Active Regions</p>
             </div>
 """
         
@@ -766,6 +780,105 @@ class ReportGenerator:
             html += "    </table>\n"
 
         html += '</div>\n'
+        return html
+
+    def _generate_monthly_relational_section(self) -> str:
+        """Generate 1-2 Month Relational & Shift Analytics section."""
+        html = '    <div class="section">\n'
+        html += '        <h2>📅 Monthly Relational & Shift Analytics</h2>\n'
+        
+        # 1. Shift Durations Breakdown
+        shift_dur = self.monthly_results.get('shift_durations', {})
+        if shift_dur:
+            html += """
+        <h3>⏱️ Driver Shift Duration Breakdown</h3>
+        <table>
+            <tr>
+                <th>Shift Duration Category</th>
+                <th>Driver Count</th>
+                <th>Percentage (%)</th>
+                <th>Avg. Cash Collected</th>
+                <th>Avg. Orders Completed</th>
+            </tr>
+"""
+            u8 = shift_dur.get('under_8_hours', {})
+            b8_12 = shift_dur.get('between_8_12_hours', {})
+            o12 = shift_dur.get('over_12_hours', {})
+
+            html += f"""
+            <tr>
+                <td><strong>&lt; 8 Hours (Part-time / Short Shift)</strong></td>
+                <td>{u8.get('count', 0)}</td>
+                <td>{u8.get('pct', 0)}%</td>
+                <td>₹{u8.get('avg_cash', 0)}</td>
+                <td>{u8.get('avg_orders', 0)}</td>
+            </tr>
+            <tr>
+                <td><strong>8 - 12 Hours (Standard Shift)</strong></td>
+                <td>{b8_12.get('count', 0)}</td>
+                <td>{b8_12.get('pct', 0)}%</td>
+                <td>₹{b8_12.get('avg_cash', 0)}</td>
+                <td>{b8_12.get('avg_orders', 0)}</td>
+            </tr>
+            <tr>
+                <td><strong>12+ Hours (High Duty Shift)</strong></td>
+                <td>{o12.get('count', 0)}</td>
+                <td>{o12.get('pct', 0)}%</td>
+                <td>₹{o12.get('avg_cash', 0)}</td>
+                <td>{o12.get('avg_orders', 0)}</td>
+            </tr>
+        </table>
+"""
+
+        # 2. Relational Insights & Correlations
+        relational = self.monthly_results.get('relational', {})
+        corrs = relational.get('correlations', {})
+        if corrs:
+            html += f"""
+        <h3>🔗 Duty Timing Correlations</h3>
+        <div style="display: flex; gap: 15px; margin: 15px 0;">
+            <div style="flex: 1; background: #eef2ff; padding: 15px; border-radius: 8px;">
+                <h4 style="margin: 0; color: #4338ca;">Duty Hours vs Cash</h4>
+                <p style="font-size: 1.4em; font-weight: bold; margin: 5px 0;">{corrs.get('hours_vs_cash', 0.0)}</p>
+                <small>Positive correlation indicates longer shifts directly yield higher cash.</small>
+            </div>
+            <div style="flex: 1; background: #eef2ff; padding: 15px; border-radius: 8px;">
+                <h4 style="margin: 0; color: #4338ca;">Duty Hours vs Notifications</h4>
+                <p style="font-size: 1.4em; font-weight: bold; margin: 5px 0;">{corrs.get('hours_vs_notifications', 0.0)}</p>
+                <small>Measures notification volume delivery relative to active hours.</small>
+            </div>
+        </div>
+"""
+
+        # 3. Location Breakdown (Location vs Notifications & Cash)
+        loc_breakdown = relational.get('location_breakdown', [])
+        if loc_breakdown:
+            html += """
+        <h3>📍 Location vs. Notifications & Cash Collection</h3>
+        <table>
+            <tr>
+                <th>Region / Cluster</th>
+                <th>Active Drivers</th>
+                <th>Total Cash</th>
+                <th>Avg. Cash / Driver</th>
+                <th>Total Notifications</th>
+                <th>Avg. Notifications / Driver</th>
+            </tr>
+"""
+            for loc in loc_breakdown[:10]:
+                html += f"""
+            <tr>
+                <td><strong>{loc['region']}</strong></td>
+                <td>{loc['driver_count']}</td>
+                <td>₹{loc['total_cash']}</td>
+                <td>₹{loc['avg_cash']}</td>
+                <td>{loc['total_notifications']}</td>
+                <td>{loc['avg_notifications']}</td>
+            </tr>
+"""
+            html += "        </table>\n"
+
+        html += '    </div>\n'
         return html
     
     def save_report(self, filepath: str, html_content: str = None) -> bool:

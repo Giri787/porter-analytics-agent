@@ -19,6 +19,7 @@ from email_handler import EmailHandler
 from data_processor import DataProcessor
 from analyzer import PorterAnalyzer
 from integrity_analyzer import IntegrityAnalyzer
+from monthly_relational_analyzer import MonthlyRelationalAnalyzer
 from report_generator import ReportGenerator
 
 
@@ -218,6 +219,11 @@ def main(test_mode: bool = False, input_file: str = None, fetch_email: bool = Tr
         integrity_analyzer = IntegrityAnalyzer(current_df, config)
         integrity_results = integrity_analyzer.run_analysis()
         
+        # Step 4.8: Monthly & Relational Analytics
+        logger.info("Running 1-2 month relational and shift timing analytics...")
+        monthly_analyzer = MonthlyRelationalAnalyzer(current_df, config)
+        monthly_results = monthly_analyzer.run_full_analysis()
+        
         # Step 5: Generate report
         logger.info("Generating report...")
         report_date = datetime.now().strftime('%Y-%m-%d')
@@ -225,7 +231,8 @@ def main(test_mode: bool = False, input_file: str = None, fetch_email: bool = Tr
         report_gen = ReportGenerator(
             analyzer.get_all_results(), 
             insights,
-            integrity_results
+            integrity_results,
+            monthly_results
         )
         
         html_report = report_gen.generate_html_report(report_date)

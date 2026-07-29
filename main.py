@@ -196,6 +196,10 @@ def main(test_mode: bool = False, input_file: str = None, fetch_email: bool = Tr
         current_df = processor.get_dataframe()
         logger.info(f"Processed {len(current_df)} driver records (4-wheelers only)")
         
+        # Step 2.5: Update Master Sheet for long-term record keeping (4-wheelers only)
+        master_file_path = data_dir / 'master_driver_data.csv'
+        processor.update_master_sheet(str(master_file_path))
+        
         # Step 3: Load previous day's data
         logger.info("Loading previous day's data for comparison...")
         previous_df = get_previous_day_data(historical_dir)

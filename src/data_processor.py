@@ -200,25 +200,54 @@ class DataProcessor:
         """
         return self.df
     
-    def save_processed_data(self, filepath: str) -> bool:
+    def update_master_sheet(self, master_filepath: str) -> bool:
         """
-        Save processed data to Excel file.
+        Append current processed 4-wheeler data to a single master file for long-term record keeping.
         
         Args:
-            filepath: Path to save the file
+            master_filepath: Path to the master dataset CSV/Excel file
             
         Returns:
-            True if saved successfully, False otherwise
+            True if updated successfully, False otherwise
         """
         try:
-            if self.df is None:
-                logger.error("No data to save")
+            if self.df is None or len(self.df) == 0:
+                logger.warning("No data available to append to master sheet.")
                 return False
+                
+            master_path = Path(master_filepath)
+            master_path.parent.mkdir(parents=True, exist_ok=True)
             
-            self.df.to_excel(filepath, index=False)
-            logger.info(f"Saved processed data to: {filepath}")
+            # Filter out 3-wheelers again strictly
+            clean_df = self.df.copy()
+            if 'vehicle_type' in clean_df.columns:
+                clean_df = clean_df[clean_df['vehicle_type'] != '3 Wheeler Electric']
+                
+            if master_path.exists():
+                if str(master_path).endswith('.csv'):
+                    existing_df = pd.read_csv(master_path)
+                else:
+                    existing_df = pd.read_excel(master_path)
+                    
+                combined_df = pd.concat([existing_df, clean_df], ignore_index=True)
+            else:
+                combined_df = clean_df
+
+            # Remove exact row duplicates
+            dedup_subset = [c for c in ['Date', 'driver_name', 'driver_mobile', 'vehicle_number'] if c in combined_df.columns]
+            if dedup_subset:
+                combined_df = combined_df.drop_duplicates(subset=dedup_subset, keep='last')
+            else:
+                combined_df = combined_df.drop_duplicates(keep='last')
+                
+            if str(master_path).endswith('.csv'):
+                combined_df.to_csv(master_path, index=False)
+            else:
+                combined_df.to_excel(master_path, index=False)
+                
+            logger.info(f"Updated Master Sheet ({len(combined_df)} total records) at: {master_path}")
             return True
             
         except Exception as e:
-            logger.error(f"Error saving data: {str(e)}", exc_info=True)
+            logger.error(f"Error updating master sheet: {str(e)}", exc_info=True)
             return False

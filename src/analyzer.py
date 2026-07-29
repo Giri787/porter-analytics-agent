@@ -32,6 +32,13 @@ class PorterAnalyzer:
         self.idle_hours_warning = float(config.get('IDLE_HOURS_WARNING', 4))
         self.cancellation_rate_warning = float(config.get('CANCELLATION_RATE_WARNING', 15))
         
+        # Standardize main metric columns
+        self.orders_col = self._find_column(['orders_completed', 'total_orders', 'orders'])
+        if self.orders_col:
+            self.df['total_orders'] = self.df[self.orders_col]
+        else:
+            self.df['total_orders'] = 0
+        
     def analyze_driver_performance(self) -> Dict[str, Any]:
         """
         Analyze individual driver performance metrics.
@@ -58,8 +65,7 @@ class PorterAnalyzer:
         cash_col = self._find_column(['cash_collected', 'cash', 'collection'])
         
         # Calculate derived metrics
-        if orders_col:
-            self.df['total_orders'] = self.df[orders_col]
+        if self.orders_col:
             results['active_drivers'] = len(self.df[self.df['total_orders'] >= self.min_orders_threshold])
             
             # Top performers by orders
@@ -88,15 +94,17 @@ class PorterAnalyzer:
                     }
                     for _, row in bottom_10.iterrows()
                 ]
+        else:
+            logger.warning("Orders column not found. Skipping order-based analysis.")
         
         # Cancellation analysis
-        if orders_col and cancelled_col:
-            self.df['cancellation_rate'] = (self.df[cancelled_col] / self.df[orders_col] * 100).fillna(0)
+        if self.orders_col and cancelled_col:
+            self.df['cancellation_rate'] = (self.df[cancelled_col] / self.df['total_orders'] * 100).fillna(0)
             self.df['cancellation_rate'] = self.df['cancellation_rate'].replace([np.inf, -np.inf], 0)
             
             high_cancel = self.df[
                 (self.df['cancellation_rate'] > self.cancellation_rate_warning) & 
-                (self.df[orders_col] >= self.min_orders_threshold)
+                (self.df['total_orders'] >= self.min_orders_threshold)
             ]
             
             results['high_cancellation_drivers'] = [
@@ -124,17 +132,29 @@ class PorterAnalyzer:
             ]
         
         # Summary statistics
-        numeric_cols = self.df.select_dtypes(include=[np.number]).columns
-        results['summary_stats'] = {
-            col: {
-                'mean': float(self.df[col].mean()),
-                'median': float(self.df[col].median()),
-                'std': float(self.df[col].std()),
-                'min': float(self.df[col].min()),
-                'max': float(self.df[col].max())
-            }
-            for col in numeric_cols if col in ['total_orders', cash_col, idle_hours_col, cancelled_col]
-        }
+        target_cols = [orders_col, cash_col, idle_hours_col, cancelled_col]
+        target_cols = [c for c in target_cols if c is not None]
+        
+        results['summary_stats'] = {}
+        for col in target_cols:
+            try:
+                # Standardize metric name in results
+                result_key = col
+                if col == self.orders_col:
+                    result_key = 'total_orders'
+                elif col == cash_col:
+                    result_key = 'total_cash'
+                
+                if col in self.df.columns and pd.api.types.is_numeric_dtype(self.df[col]):
+                    results['summary_stats'][result_key] = {
+                        'mean': float(self.df[col].mean()),
+                        'median': float(self.df[col].median()),
+                        'std': float(self.df[col].std()),
+                        'min': float(self.df[col].min()),
+                        'max': float(self.df[col].max())
+                    }
+            except Exception as e:
+                logger.warning(f"Could not calculate stats for column {col}: {str(e)}")
         
         self.analysis_results['driver_performance'] = results
         return results
@@ -170,15 +190,15 @@ class PorterAnalyzer:
             stats = {
                 'region': region,
                 'driver_count': len(group),
-                'total_orders': int(group[orders_col].sum()) if orders_col else 0,
-                'avg_orders_per_driver': float(group[orders_col].mean()) if orders_col else 0,
+                'total_orders': int(group['total_orders'].sum()) if self.orders_col else 0,
+                'avg_orders_per_driver': float(group['total_orders'].mean()) if self.orders_col else 0,
                 'total_cash': float(group[cash_col].sum()) if cash_col else 0,
                 'avg_cash_per_driver': float(group[cash_col].mean()) if cash_col else 0,
                 'total_cancelled': int(group[cancelled_col].sum()) if cancelled_col else 0,
                 'cancellation_rate': 0
             }
             
-            if orders_col and cancelled_col and stats['total_orders'] > 0:
+            if self.orders_col and cancelled_col and stats['total_orders'] > 0:
                 stats['cancellation_rate'] = round(
                     (stats['total_cancelled'] / stats['total_orders'] * 100), 2
                 )
@@ -215,9 +235,12 @@ class PorterAnalyzer:
         cash_col = self._find_column(['cash_collected', 'cash', 'collection'])
         
         # Overall metrics comparison
-        if orders_col:
-            current_total_orders = self.df[orders_col].sum()
-            previous_total_orders = previous_df[orders_col].sum()
+        if self.orders_col:
+            # Check if self.orders_col in previous_df
+            prev_orders_col = self._find_column_in_df(previous_df, ['orders_completed', 'total_orders', 'orders'])
+            
+            current_total_orders = self.df['total_orders'].sum()
+            previous_total_orders = previous_df[prev_orders_col].sum() if prev_orders_col else 0
             change = current_total_orders - previous_total_orders
             pct_change = (change / previous_total_orders * 100) if previous_total_orders > 0 else 0
             
@@ -249,9 +272,11 @@ class PorterAnalyzer:
         }
         
         # Region-level comparison
-        if 'driver_geo_region' in self.df.columns and orders_col:
-            current_region = self.df.groupby('driver_geo_region')[orders_col].sum()
-            previous_region = previous_df.groupby('driver_geo_region')[orders_col].sum()
+        if 'driver_geo_region' in self.df.columns and self.orders_col:
+            prev_orders_col = self._find_column_in_df(previous_df, ['orders_completed', 'total_orders', 'orders'])
+            
+            current_region = self.df.groupby('driver_geo_region')['total_orders'].sum()
+            previous_region = previous_df.groupby('driver_geo_region')[prev_orders_col].sum() if prev_orders_col else pd.Series()
             
             for region in current_region.index:
                 current_val = current_region.get(region, 0)
@@ -313,9 +338,10 @@ class PorterAnalyzer:
             
             if loc['region_stats']:
                 top_region = loc['region_stats'][0]
+                total_orders = top_region.get('total_orders', 0)
                 insights.append(
                     f"🏆 Top performing region: {top_region['region']} with "
-                    f"{top_region['total_orders']} total orders"
+                    f"{total_orders} total orders"
                 )
         
         # Day-over-day insights
@@ -333,23 +359,21 @@ class PorterAnalyzer:
         return insights
     
     def _find_column(self, possible_names: List[str]) -> Optional[str]:
+        """Find a column by checking multiple possible names in self.df."""
+        return self._find_column_in_df(self.df, possible_names)
+
+    def _find_column_in_df(self, df: pd.DataFrame, possible_names: List[str]) -> Optional[str]:
         """
-        Find a column by checking multiple possible names.
-        
-        Args:
-            possible_names: List of possible column names to check
-            
-        Returns:
-            Actual column name if found, None otherwise
+        Find a column by checking multiple possible names in a specific DataFrame.
         """
         for name in possible_names:
             # Check exact match (case-insensitive)
-            for col in self.df.columns:
+            for col in df.columns:
                 if col.lower() == name.lower():
                     return col
             
             # Check partial match
-            for col in self.df.columns:
+            for col in df.columns:
                 if name.lower() in col.lower():
                     return col
         

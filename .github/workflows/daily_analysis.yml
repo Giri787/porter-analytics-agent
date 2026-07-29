@@ -12,10 +12,10 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.9'
         cache: 'pip'
@@ -36,21 +36,31 @@ jobs:
         IMAP_PORT: ${{ secrets.IMAP_PORT || '993' }}
         SMTP_SERVER: ${{ secrets.SMTP_SERVER || 'smtp.gmail.com' }}
         SMTP_PORT: ${{ secrets.SMTP_PORT || '587' }}
-        EMAIL_SENDER_FILTER: ${{ secrets.EMAIL_SENDER_FILTER || 'datainfra@theporter.in' }}
+        EMAIL_SENDER_FILTER: ${{ secrets.EMAIL_SENDER_FILTER || 'datareports@theporter.in' }}
+        EMAIL_SUBJECT_FILTER: ${{ secrets.EMAIL_SUBJECT_FILTER || '3W - EV daily report' }}
         REPORT_TO: ${{ secrets.REPORT_TO }}
         # Default config values
-        EMAIL_SUBJECT_FILTER: 'Porter'
-        ONLY_UNREAD: 'true'
+        ONLY_UNREAD: 'false'
         MARK_AS_READ: 'true'
         MIN_ORDERS_THRESHOLD: '5'
+        GOP_CREDENTIALS_JSON: ${{ secrets.GOP_CREDENTIALS_JSON }}
+        GOP_TOKEN_JSON: ${{ secrets.GOP_TOKEN_JSON }}
       run: |
-        # Create a temporary .env file from secrets/env vars for the script to use
-        # (Or rely on script reading env vars directly which python-dotenv does)
+        # Reconstitute OAuth2 files if secrets are available
+        if [ ! -z "$GOP_CREDENTIALS_JSON" ]; then
+          echo "$GOP_CREDENTIALS_JSON" > credentials.json
+          echo "Created credentials.json from secret"
+        fi
+        if [ ! -z "$GOP_TOKEN_JSON" ]; then
+          echo "$GOP_TOKEN_JSON" > token.json
+          echo "Created token.json from secret"
+        fi
+        
         python main.py
 
     - name: Archive artifacts (Optional)
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: execution-logs
         path: |

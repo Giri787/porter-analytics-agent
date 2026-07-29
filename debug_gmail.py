@@ -33,20 +33,26 @@ def test_gmail_search():
     try:
         handler = EmailHandler(config)
         
+        search_query = 'subject:"3W - EV daily report"'
+        print(f"Searching for: {search_query}")
+        
+        results = handler.service.users().messages().list(userId='me', q=search_query, maxResults=50).execute()
+        messages = results.get('messages', [])
+        
         with open('debug_log.txt', 'w', encoding='utf-8') as log:
-            log.write("Listing last 20 messages from the entire inbox:\n")
-            results = handler.service.users().messages().list(userId='me', maxResults=20).execute()
-            messages = results.get('messages', [])
-            
             if not messages:
-                log.write("[ERROR] No messages found in the inbox.\n")
+                print("[WARNING] No messages found with that subject.")
+                log.write(f"[WARNING] No messages found for query: {search_query}\n")
             else:
-                for msg in messages:
+                print(f"[SUCCESS] Found {len(messages)} messages.")
+                for i, msg in enumerate(messages[:10]): # Just show top 10
                     m = handler.service.users().messages().get(userId='me', id=msg['id']).execute()
                     subject = next((h['value'] for h in m['payload']['headers'] if h['name'].lower() == 'subject'), 'No Subject')
                     date_header = next((h['value'] for h in m['payload']['headers'] if h['name'].lower() == 'date'), 'No Date')
                     sender = next((h['value'] for h in m['payload']['headers'] if h['name'].lower() == 'from'), 'No Sender')
-                    log.write(f"[{date_header}] From: {sender} | Subject: {subject}\n")
+                    result = f"[{date_header}] From: {sender} | Subject: {subject}"
+                    print(result)
+                    log.write(result + "\n")
             
         print("[SUCCESS] Debug log written to debug_log.txt")
                 

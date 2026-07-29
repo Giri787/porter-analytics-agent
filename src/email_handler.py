@@ -80,6 +80,7 @@ class EmailHandler:
             search_subject = self.subject_filter if self.subject_filter else "3W - EV daily report"
             query = f"from:{self.sender_filter} subject:\"{search_subject}\""
             
+            # Default to checking unread if specified in config, but search more broadly if false
             if self.config.get('ONLY_UNREAD', 'true').lower() == 'true':
                 query += " is:unread"
             

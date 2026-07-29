@@ -1,21 +1,10 @@
-Listing last 20 messages from the entire inbox:
-[Sun, 15 Feb 2026 19:15:25 +0530] From: Bopanna KA <bopanna.ka@bluwheelz.co.in> | Subject: Re: Approval Request – Ad-hoc Drivers & Helpers (HYD)
-[Sun, 15 Feb 2026 19:14:20 +0530] From: Laxmikant Jha <laxmikant.jha@truxcargo.com> | Subject: Re: Vehicles ready to be picked
-[Sun, 15 Feb 2026 13:01:30 +0000] From: Max from n8n <onboarding@info.n8n.io> | Subject: Your n8n trial has ended
-[Sun, 15 Feb 2026 12:45:39 +0000] From: <Mukesh1.Mishra@ril.com> | Subject: Need 2 EV in our Faridabad hub
-[Sun, 15 Feb 2026 18:00:00 +0530] From: Aakash Kumar <aakash.kumar@bluwheelz.co.in> | Subject: EOD Wallet Balances Update 15th February 2026
-[Sun, 15 Feb 2026 17:21:11 +0530] From: Umesh Bhardwaj <umesh@bluwheelz.co.in> | Subject: Re: Review Meeting
-[Sun, 15 Feb 2026 15:48:15 +0530] From: Anubhav Giri <anubhav.giri@bluwheelz.co.in> | Subject: Vehicles ready to be picked
-[Sun, 15 Feb 2026 15:11:05 +0530] From: Anmol Gupta <anmolgupta603@gmail.com> | Subject: Re: Need Insurance Quotation
-[Sun, 15 Feb 2026 13:20:12 +0530] From: S G <sg@bluwheelz.co.in> | Subject: Fwd: Launch Invite : Ready For Take-off on 17th Feb 2026, 11 AM ~ 3 PM ; The Grand, Vasant Kunj, Delhi
-[Sun, 15 Feb 2026 12:34:30 +0530] From: Bopanna KA <bopanna.ka@bluwheelz.co.in> | Subject: Re: Approval Request – Ad-hoc Drivers & Helpers (HYD)
-[Sun, 15 Feb 2026 12:26:43 +0530] From: K Raju <kethavath.raju@bluwheelz.co.in> | Subject: Approval Request – Ad-hoc Drivers & Helpers (HYD)
-[Sun, 15 Feb 2026 12:13:01 +0530] From: H B <harsh@bluwheelz.co.in> | Subject: Re: Asset Missing from Vehicle at Kompally Charging Station (HYD)
-[Sun, 15 Feb 2026 12:12:32 +0530] From: Arun Kumar Rathi <arunrathi@bluwheelz.co.in> | Subject: Re: Asset Missing from Vehicle at Kompally Charging Station (HYD)
-[Sun, 15 Feb 2026 12:08:58 +0530] From: Anubhav Giri <anubhav.giri@bluwheelz.co.in> | Subject: Re: Asset Missing from Vehicle at Kompally Charging Station (HYD)
-[Sun, 15 Feb 2026 11:48:32 +0530] From: K Raju <kethavath.raju@bluwheelz.co.in> | Subject: Asset Missing from Vehicle at Kompally Charging Station (HYD)
-[Sun, 15 Feb 2026 11:26:27 +0530] From: Sumit Singh <sumit.singh@bluwheelz.co.in> | Subject: Re: Battery stolen DL51GD3656
-[Sun, 15 Feb 2026 03:31:49 +0000] From: Bluwheelz Mobility Services Private Limited <no-reply@kekamail.com> | Subject: Daily Email Digest
+[Mon, 16 Feb 2026 19:32:28 -0800 (PST)] From: datareports@theporter.in | Subject: 3W - EV daily report - Dated:17-02-2026
+[Sun, 15 Feb 2026 19:32:36 -0800 (PST)] From: datareports@theporter.in | Subject: 3W - EV daily report - Dated:16-02-2026
 [Sat, 14 Feb 2026 19:31:33 -0800 (PST)] From: datareports@theporter.in | Subject: 3W - EV daily report - Dated:15-02-2026
-[Sun, 15 Feb 2026 08:06:34 +0530] From: Vipin Tokas <vipin@bluwheelz.co.in> | Subject: Re: Feb Parking, Air, Puncture cost upto 14th Feb
-[Sat, 14 Feb 2026 17:08:02 -0800] From: noreply-apps-scripts-notifications@google.com | Subject: Summary of failures for Google Apps Script: Untitled project
+[Fri, 13 Feb 2026 19:31:43 -0800 (PST)] From: datareports@theporter.in | Subject: 3W - EV daily report - Dated:14-02-2026
+[Thu, 12 Feb 2026 19:32:31 -0800 (PST)] From: datareports@theporter.in | Subject: 3W - EV daily report - Dated:13-02-2026
+[Wed, 11 Feb 2026 19:35:48 -0800 (PST)] From: datareports@theporter.in | Subject: 3W - EV daily report - Dated:12-02-2026
+[Tue, 10 Feb 2026 19:33:08 -0800 (PST)] From: datareports@theporter.in | Subject: 3W - EV daily report - Dated:11-02-2026
+[Mon, 09 Feb 2026 19:35:50 -0800 (PST)] From: datareports@theporter.in | Subject: 3W - EV daily report - Dated:10-02-2026
+[Sun, 08 Feb 2026 19:32:42 -0800 (PST)] From: datareports@theporter.in | Subject: 3W - EV daily report - Dated:09-02-2026
+[Sun, 8 Feb 2026 09:34:27 +0530] From: Anubhav Giri <anubhav.giri@bluwheelz.co.in> | Subject: Fwd: 3W - EV daily report - Dated:08-02-2026

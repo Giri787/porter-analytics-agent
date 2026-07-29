@@ -46,6 +46,22 @@ jobs:
         GOP_CREDENTIALS_JSON: ${{ secrets.GOP_CREDENTIALS_JSON }}
         GOP_TOKEN_JSON: ${{ secrets.GOP_TOKEN_JSON }}
       run: |
+        mkdir -p config
+        cat << 'EOF' > config/.env
+EMAIL_ADDRESS=${EMAIL_ADDRESS}
+EMAIL_PASSWORD=${EMAIL_PASSWORD:-oauth2}
+IMAP_SERVER=${IMAP_SERVER:-imap.gmail.com}
+IMAP_PORT=${IMAP_PORT:-993}
+SMTP_SERVER=${SMTP_SERVER:-smtp.gmail.com}
+SMTP_PORT=${SMTP_PORT:-587}
+EMAIL_SENDER_FILTER=${EMAIL_SENDER_FILTER:-datareports@theporter.in}
+EMAIL_SUBJECT_FILTER=${EMAIL_SUBJECT_FILTER:-3W - EV daily report}
+REPORT_TO=${REPORT_TO}
+ONLY_UNREAD=${ONLY_UNREAD:-false}
+MARK_AS_READ=${MARK_AS_READ:-true}
+MIN_ORDERS_THRESHOLD=${MIN_ORDERS_THRESHOLD:-5}
+EOF
+
         # Reconstitute OAuth2 files if secrets are available
         if [ ! -z "$GOP_CREDENTIALS_JSON" ]; then
           echo "$GOP_CREDENTIALS_JSON" > credentials.json

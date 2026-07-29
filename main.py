@@ -37,48 +37,35 @@ def setup_logging(debug_mode: bool = False):
 
 
 def load_config():
-    """Load configuration from .env file."""
-    # Try to load from config/.env first, then .env
+    """Load configuration from .env file or environment variables."""
     config_path = Path('config/.env')
     if not config_path.exists():
         config_path = Path('.env')
     
-    if not config_path.exists():
-        raise FileNotFoundError(
-            "Configuration file not found. Please create config/.env or .env file. "
-            "See config/.env.example for template."
-        )
+    if config_path.exists():
+        load_dotenv(config_path)
+    else:
+        load_dotenv()
     
-    load_dotenv(config_path)
-    
-    # Validate required config
-    required_keys = [
-        'EMAIL_ADDRESS', 'EMAIL_PASSWORD', 'IMAP_SERVER', 'IMAP_PORT',
-        'SMTP_SERVER', 'SMTP_PORT', 'EMAIL_SENDER_FILTER', 'REPORT_TO'
-    ]
-    
-    config = {}
-    missing_keys = []
-    
-    for key in required_keys:
-        value = os.getenv(key)
-        if not value:
-            missing_keys.append(key)
-        config[key] = value
-    
-    if missing_keys:
-        raise ValueError(f"Missing required configuration keys: {', '.join(missing_keys)}")
-    
-    # Optional config with defaults
-    config['EMAIL_SUBJECT_FILTER'] = os.getenv('EMAIL_SUBJECT_FILTER', 'Porter')
-    config['ONLY_UNREAD'] = os.getenv('ONLY_UNREAD', 'true')
-    config['MARK_AS_READ'] = os.getenv('MARK_AS_READ', 'true')
-    config['REPORT_FROM_NAME'] = os.getenv('REPORT_FROM_NAME', 'Porter Analytics Agent')
-    config['REPORT_SUBJECT'] = os.getenv('REPORT_SUBJECT', 'Daily Porter Driver Performance Report - {date}')
-    config['MIN_ORDERS_THRESHOLD'] = os.getenv('MIN_ORDERS_THRESHOLD', '5')
-    config['IDLE_HOURS_WARNING'] = os.getenv('IDLE_HOURS_WARNING', '4')
-    config['CANCELLATION_RATE_WARNING'] = os.getenv('CANCELLATION_RATE_WARNING', '15')
-    config['DEBUG_MODE'] = os.getenv('DEBUG_MODE', 'false')
+    config = {
+        'EMAIL_ADDRESS': os.getenv('EMAIL_ADDRESS', ''),
+        'EMAIL_PASSWORD': os.getenv('EMAIL_PASSWORD', 'oauth2'),
+        'IMAP_SERVER': os.getenv('IMAP_SERVER', 'imap.gmail.com'),
+        'IMAP_PORT': os.getenv('IMAP_PORT', '993'),
+        'SMTP_SERVER': os.getenv('SMTP_SERVER', 'smtp.gmail.com'),
+        'SMTP_PORT': os.getenv('SMTP_PORT', '587'),
+        'EMAIL_SENDER_FILTER': os.getenv('EMAIL_SENDER_FILTER', 'datareports@theporter.in'),
+        'EMAIL_SUBJECT_FILTER': os.getenv('EMAIL_SUBJECT_FILTER', '3W - EV daily report'),
+        'REPORT_TO': os.getenv('REPORT_TO', ''),
+        'ONLY_UNREAD': os.getenv('ONLY_UNREAD', 'false'),
+        'MARK_AS_READ': os.getenv('MARK_AS_READ', 'true'),
+        'REPORT_FROM_NAME': os.getenv('REPORT_FROM_NAME', 'Porter Analytics Agent'),
+        'REPORT_SUBJECT': os.getenv('REPORT_SUBJECT', 'Daily Porter Driver Performance Report - {date}'),
+        'MIN_ORDERS_THRESHOLD': os.getenv('MIN_ORDERS_THRESHOLD', '5'),
+        'IDLE_HOURS_WARNING': os.getenv('IDLE_HOURS_WARNING', '4'),
+        'CANCELLATION_RATE_WARNING': os.getenv('CANCELLATION_RATE_WARNING', '15'),
+        'DEBUG_MODE': os.getenv('DEBUG_MODE', 'false'),
+    }
     
     return config
 
